@@ -34,6 +34,8 @@ ALLOWED_HOSTS = ['51.250.105.182', '127.0.0.1', 'localhost']
 # Application definition
 
 INSTALLED_APPS = [
+    'adminlte3',
+    'adminlte3_theme',
     'admin_panel.telebot.apps.TelebotConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -58,7 +60,7 @@ ROOT_URLCONF = 'admin_panel.admin_panel.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
