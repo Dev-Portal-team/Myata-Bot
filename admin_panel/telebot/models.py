@@ -257,6 +257,11 @@ class Booking(CreatedModel):
         verbose_name="Дата брони",
         help_text='Дата брони'
     )
+    phone = models.CharField(
+        max_length=50,
+        help_text='Номер телефона гостя',
+        verbose_name='Номер гостя',
+    )
     is_confirmed = models.BooleanField(
         help_text='Статус подтверждена или нет',
         verbose_name='Статус',
