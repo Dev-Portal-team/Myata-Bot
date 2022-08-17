@@ -89,7 +89,7 @@ class Product(CreatedModel):
         verbose_name='Категория к которой относится продукт'
     )
     price = models.IntegerField(
-        help_text='Цена продукта',
+        help_text='Указывать если товар не является напитком',
         verbose_name='Цена',
         blank=True,
         null=True,
@@ -105,10 +105,12 @@ class Product(CreatedModel):
         default=False
     )
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(self, *args, **kwargs):
         if self.is_drink and self.price:
             raise ValidationError(
                 "Для продукта который является напитком цена задается в 'Таблица литража и цены напитка'")
+        else:
+            super(Product, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Продукты ресторана'
@@ -140,7 +142,8 @@ class MeasuringDrinks(models.Model):
         on_delete=models.CASCADE,
         related_name='displacement',
         help_text='Продукт который относится к литражу',
-        verbose_name='Продукт который относится к литражу'
+        verbose_name='Продукт который относится к литражу',
+        limit_choices_to={'is_drink': True},
     )
 
     class Meta:
@@ -177,6 +180,12 @@ class Order(CreatedModel):
         help_text='Статус заказа',
         verbose_name='Статус',
     )
+    comment = models.TextField(
+        help_text='Комментарий к закауз',
+        verbose_name='Комментарий',
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = 'Заказы ресторана'
@@ -189,6 +198,8 @@ class Order(CreatedModel):
     def get_total_cost(self):
         return sum(item.get_cost() for item in self.items.all())
 
+    get_total_cost.short_description = "Итоговая цена"
+
 
 class OrderItem(models.Model):
     order = models.ForeignKey(
@@ -200,13 +211,21 @@ class OrderItem(models.Model):
         help_text='Заказ к которому относится позиция',
         verbose_name='Заказ к которому относится позиция',
     )
+    user = models.ForeignKey(
+        Client,
+        on_delete=models.CASCADE,
+        related_name='order_items',
+        help_text='Гость к котрому относится позиция',
+        verbose_name='Гость'
+    )
     product = models.ForeignKey(
         Product,
         on_delete=models.SET_NULL,
         related_name='order_items',
         blank=True,
-        help_text='Цена за 1 еденицу',
-        verbose_name='Цена',
+        null=True,
+        help_text='Продукт',
+        verbose_name='Продукт',
     )
     price = models.IntegerField(
         default=1,
@@ -216,7 +235,7 @@ class OrderItem(models.Model):
     quantity = models.IntegerField(
         default=1,
         help_text='Количество продукта',
-        verbose_name='Колицество',
+        verbose_name='Количество',
     )
     displacement = models.IntegerField(
         help_text='Вариант литража напитка',
@@ -240,8 +259,16 @@ class OrderItem(models.Model):
     def get_cost(self):
         return self.price * self.quantity
 
+    get_cost.short_description = "Итоговая цена"
+
 
 class Booking(CreatedModel):
+    THEME_CHOICES = (
+        ('accepted', 'Не отвечен'),
+        ('confirm', 'Подтвержден'),
+        ('cancelled', 'Отменен'),
+    )
+
     user = models.ForeignKey(
         Client,
         on_delete=models.CASCADE,
@@ -253,7 +280,7 @@ class Booking(CreatedModel):
         help_text='Количетсво гостей брони',
         verbose_name='Количетсво гостей',
     )
-    start_subscribe = models.DateTimeField(
+    booking_day = models.DateTimeField(
         verbose_name="Дата брони",
         help_text='Дата брони'
     )
@@ -262,10 +289,12 @@ class Booking(CreatedModel):
         help_text='Номер телефона гостя',
         verbose_name='Номер гостя',
     )
-    is_confirmed = models.BooleanField(
-        help_text='Статус подтверждена или нет',
+    is_confirmed = models.CharField(
+        choices=THEME_CHOICES,
+        default='accepted',
+        max_length=40,
+        help_text='Статус отклика на бронь',
         verbose_name='Статус',
-        default=False
     )
 
     class Meta:
