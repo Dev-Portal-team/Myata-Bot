@@ -19,10 +19,10 @@ from django.urls import path
 
 from django.conf.urls.static import static
 
-
+from admin_panel.telebot.admin import crm_admin
 
 urlpatterns = [
-    path('', admin.site.urls),
+    path('', crm_admin.urls),
 
 ]
 
